@@ -1,6 +1,6 @@
 import streamlit as st
 import matplotlib
-matplotlib.use('Agg') # VIKTIGT PÅ SERVER: Tvingar grafen att ritas utan fysisk skärm
+matplotlib.use('Agg') 
 import matplotlib.pyplot as plt
 import numpy as np
 import random
@@ -36,7 +36,6 @@ def ny_uppgift():
         giltiga_punkter = []
         for x_val in np.arange(-8, 8.5, 0.5):
             y_val = f(x_val)
-            # Vi avrundar lätt för att slippa pyttesmå osynliga decimalfel
             if abs(y_val) <= 10 and round(y_val * 2, 4).is_integer():
                 giltiga_punkter.append((x_val, y_val))
                 
@@ -90,13 +89,16 @@ def ny_uppgift():
                 ratt_svar = [f(f(c))]
                 break
     else:
-        # Nödlösning om den mot förmodan inte hittar en graf på 50 försök
+        # Nödlösning om den mot förmodan inte hittar en graf
         f = lambda x: x
         fraga = "Vad är f(1)?"
         ratt_svar = [1.0]
 
     st.session_state.f = f
-    st.session_state.fraga = fraga.replace('.', ',')
+    
+    # FIX: Skydda sista tecknet (? eller .) så det inte byts ut mot kommatecken
+    st.session_state.fraga = fraga[:-1].replace('.', ',') + fraga[-1]
+    
     st.session_state.ratt_svar = ratt_svar
 
 # --- Initiera appens minne ---
@@ -147,7 +149,7 @@ ax.text(10.2, 0, 'x', va='center', ha='left', fontsize=12, fontweight='bold')
 ax.text(0, 10.2, 'y', va='bottom', ha='center', fontsize=12, fontweight='bold')
 
 st.pyplot(fig)
-plt.close(fig) # VIKTIGT: Stänger minnet så servern inte kraschar över tid
+plt.close(fig) 
 
 # --- Frågedelen ---
 st.subheader(st.session_state.fraga)
