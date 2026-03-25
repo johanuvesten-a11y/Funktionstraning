@@ -47,10 +47,10 @@ def ny_uppgift():
             fraga_typ = random.choice(['hitta_y', 'hitta_x'])
             
             if fraga_typ == 'hitta_y':
-                fraga = f"Vad är f({target_x:g})?"
+                fraga = f"Vad är f({target_x:g})"
                 ratt_svar = [target_y]
             else:
-                fraga = f"Bestäm ett x-värde så att f(x) = {target_y:g}."
+                fraga = f"Bestäm ett x-värde så att f(x) = {target_y:g}"
                 alla_x = list(set([p[0] for p in giltiga_punkter if p[1] == target_y]))
                 ratt_svar = sorted(alla_x)
                 
@@ -67,7 +67,7 @@ def ny_uppgift():
                 c = random.choice([-3, -2, -1, 1, 2, 3])
                 c_str = f"+ {c}" if c > 0 else f"- {abs(c)}"
                 
-                fraga = f"Bestäm x om f(x {c_str}) = {target_y:g}."
+                fraga = f"Bestäm x om f(x {c_str}) = {target_y:g}"
                 
                 alla_mål_x = [p[0] for p in giltiga_punkter if p[1] == target_y]
                 ratt_svar = sorted([tx - c for tx in alla_mål_x])
@@ -85,19 +85,19 @@ def ny_uppgift():
                 if not valid_c: continue 
                 
                 c = random.choice(valid_c)
-                fraga = f"Vad är f(f({c}))?"
+                fraga = f"Vad är f(f({c}))"
                 ratt_svar = [f(f(c))]
                 break
     else:
         # Nödlösning om den mot förmodan inte hittar en graf
         f = lambda x: x
-        fraga = "Vad är f(1)?"
+        fraga = "Vad är f(1)"
         ratt_svar = [1.0]
 
     st.session_state.f = f
     
-    # FIX: Skydda sista tecknet (? eller .) så det inte byts ut mot kommatecken
-    st.session_state.fraga = fraga[:-1].replace('.', ',') + fraga[-1]
+    # Byt enbart ut eventuella engelska decimalpunkter mot kommatecken
+    st.session_state.fraga = fraga.replace('.', ',')
     
     st.session_state.ratt_svar = ratt_svar
 
