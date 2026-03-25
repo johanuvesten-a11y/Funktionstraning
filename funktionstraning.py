@@ -47,10 +47,9 @@ def ny_uppgift():
             fraga_typ = random.choice(['hitta_y', 'hitta_x'])
             
             if fraga_typ == 'hitta_y':
-                fraga = f"Vad är f({target_x:g})"
+                fraga = f"Bestäm f({target_x:g})"
                 ratt_svar = [target_y]
             else:
-                # Ändrad text enligt dina önskemål!
                 fraga = f"Bestäm ett värde på x så att f(x) = {target_y:g}"
                 alla_x = list(set([p[0] for p in giltiga_punkter if p[1] == target_y]))
                 ratt_svar = sorted(alla_x)
@@ -87,7 +86,7 @@ def ny_uppgift():
                 if not valid_c: continue 
                 
                 c = random.choice(valid_c)
-                fraga = f"Vad är f(f({c}))"
+                fraga = f"Bestäm f(f({c}))"
                 ratt_svar = [f(f(c))]
                 break
                 
@@ -104,7 +103,7 @@ def ny_uppgift():
                 else:
                     svar = p1[1] - p2[1]
                     
-                fraga = f"Vad är f({p1[0]:g}) {op} f({p2[0]:g})"
+                fraga = f"Bestäm f({p1[0]:g}) {op} f({p2[0]:g})"
                 ratt_svar = [svar]
                 break
                 
@@ -115,10 +114,8 @@ def ny_uppgift():
                 
                 k_val = random.choice([2, -2, 0.5, -0.5, -1])
                 
-                # Räkna ut vilka x-värden som löser ekvationen
                 mojliga_svar = [x / k_val for x in alla_mål_x]
                 
-                # Vi godkänner bara frågan om svaret (x) blir ett helt eller halvt tal
                 if all(round(s * 2, 4).is_integer() and abs(s) <= 20 for s in mojliga_svar):
                     k_str = f"{k_val:g}"
                     fraga = f"Bestäm x om f({k_str}x) = {mål_y:g}"
@@ -128,9 +125,9 @@ def ny_uppgift():
                     continue
 
     else:
-        # Nödlösning om den mot förmodan inte hittar en graf
+        # Nödlösning
         f = lambda x: x
-        fraga = "Vad är f(1)"
+        fraga = "Bestäm f(1)"
         ratt_svar = [1.0]
 
     st.session_state.f = f
