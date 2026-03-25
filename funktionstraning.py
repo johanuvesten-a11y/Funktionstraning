@@ -29,8 +29,8 @@ def ny_uppgift():
         
     niva = st.session_state.get('niva', 1)
         
-    # Säkerhetsspärr: Försök max 50 gånger för att undvika evighetsloop
-    for _ in range(50): 
+    # Säkerhetsspärr: Försök max 100 gånger för att hitta en perfekt funktion och fråga
+    for _ in range(100): 
         f = generera_funktion()
         
         giltiga_punkter = []
@@ -57,7 +57,8 @@ def ny_uppgift():
             break 
             
         else:
-            fraga_typ = random.choice(['f_x_plus_c', 'f_f_c'])
+            # Nu finns det 4 olika uppgiftstyper för Nivå 2
+            fraga_typ = random.choice(['f_x_plus_c', 'f_f_c', 'f_a_op_f_b', 'f_kx'])
             
             if fraga_typ == 'f_x_plus_c':
                 hel_punkter = [p for p in giltiga_punkter if round(p[1], 4).is_integer()]
@@ -88,6 +89,43 @@ def ny_uppgift():
                 fraga = f"Vad är f(f({c}))"
                 ratt_svar = [f(f(c))]
                 break
+                
+            elif fraga_typ == 'f_a_op_f_b':
+                # Typ 1: Operationer med funktionsvärden, t.ex. f(2) + f(1)
+                hel_punkter = [p for p in giltiga_punkter if round(p[1], 4).is_integer() and round(p[0], 4).is_integer()]
+                if len(hel_punkter) < 2: continue
+                
+                p1, p2 = random.sample(hel_punkter, 2)
+                op = random.choice(['+', '-'])
+                
+                if op == '+':
+                    svar = p1[1] + p2[1]
+                else:
+                    svar = p1[1] - p2[1]
+                    
+                fraga = f"Vad är f({p1[0]:g}) {op} f({p2[0]:g})"
+                ratt_svar = [svar]
+                break
+                
+            elif fraga_typ == 'f_kx':
+                # Typ 3: Inre multiplikation, t.ex. Bestäm x om f(2x) = 4
+                mål_y = random.choice([p[1] for p in giltiga_punkter])
+                alla_mål_x = [p[0] for p in giltiga_punkter if p[1] == mål_y]
+                
+                k_val = random.choice([2, -2, 0.5, -0.5, -1])
+                
+                # Räkna ut vilka x-värden som löser ekvationen
+                mojliga_svar = [x / k_val for x in alla_mål_x]
+                
+                # Vi godkänner bara frågan om svaret (x) blir ett helt eller halvt tal
+                if all(round(s * 2, 4).is_integer() and abs(s) <= 20 for s in mojliga_svar):
+                    k_str = f"{k_val:g}"
+                    fraga = f"Bestäm x om f({k_str}x) = {mål_y:g}"
+                    ratt_svar = sorted(mojliga_svar)
+                    break
+                else:
+                    continue
+
     else:
         # Nödlösning om den mot förmodan inte hittar en graf
         f = lambda x: x
