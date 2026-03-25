@@ -50,7 +50,8 @@ def ny_uppgift():
                 fraga = f"Vad är f({target_x:g})"
                 ratt_svar = [target_y]
             else:
-                fraga = f"Bestäm ett x-värde så att f(x) = {target_y:g}"
+                # Ändrad text enligt dina önskemål!
+                fraga = f"Bestäm ett värde på x så att f(x) = {target_y:g}"
                 alla_x = list(set([p[0] for p in giltiga_punkter if p[1] == target_y]))
                 ratt_svar = sorted(alla_x)
                 
