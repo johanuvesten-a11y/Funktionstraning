@@ -133,7 +133,6 @@ def ny_uppgift():
                 mål_y = random.choice([p[1] for p in giltiga_punkter])
                 alla_mål_x = [p[0] for p in giltiga_punkter if p[1] == mål_y]
                 
-                # FIX: Ändrat till enbart [2, -2] för att undvika f(0.5x) etc.
                 k_val = random.choice([2, -2])
                 
                 mojliga_svar = [x / k_val for x in alla_mål_x]
@@ -182,8 +181,15 @@ with col_graf:
     ax.xaxis.set_ticks_position('bottom')
     ax.yaxis.set_ticks_position('left')
 
-    ax.set_xticks(np.arange(-10, 11, 1))
-    ax.set_yticks(np.arange(-10, 11, 1))
+    # FIX: Behåller rutnätet vid varje heltal, men skriver bara ut specifika siffror
+    ticks = np.arange(-10, 11, 1)
+    labels = [str(x) if x in [-10, -5, 5, 10] else '' for x in ticks]
+    
+    ax.set_xticks(ticks)
+    ax.set_xticklabels(labels)
+    ax.set_yticks(ticks)
+    ax.set_yticklabels(labels)
+    
     ax.set_xlim(-10, 10)
     ax.set_ylim(-10, 10)
     ax.set_aspect('equal')
