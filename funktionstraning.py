@@ -5,9 +5,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 import random
 
+# --- Ställ in sidans layout till bred (valfritt, men ger mer plats) ---
+st.set_page_config(layout="wide", page_title="Läs av grafen")
+
 # --- Funktioner ---
 def generera_funktion():
-    """Slumpar fram en rät linje eller en andragradsfunktion."""
     typ = random.choice(['linjar', 'kvadratisk'])
     
     if typ == 'linjar':
@@ -21,7 +23,6 @@ def generera_funktion():
         return lambda x: a * (x - h)**2 + v
 
 def ny_uppgift():
-    """Skapar en ny funktion, väljer frågetyp beroende på nivå."""
     if 'fraga_nr' not in st.session_state:
         st.session_state.fraga_nr = 1
     else:
@@ -33,11 +34,9 @@ def ny_uppgift():
         f = generera_funktion()
         
         giltiga_punkter = []
-        # FIX: Använder en säkrare metod än np.arange för att undvika decimalfel
         for x_val in [i / 2 for i in range(-16, 17)]:
             y_val = f(x_val)
             if abs(y_val) <= 10 and round(y_val * 2, 4).is_integer():
-                # FIX: Runda av värdena direkt när de sparas
                 giltiga_punkter.append((round(x_val, 4), round(y_val, 4)))
                 
         if not giltiga_punkter:
@@ -51,7 +50,6 @@ def ny_uppgift():
                 fraga = f"Bestäm f({target_x:g})"
                 ratt_svar = [target_y]
             else:
-                # FIX: Lägger till 0.0 för att datorn inte ska skriva ut -0
                 target_y_snygg = target_y + 0.0 
                 fraga = f"Bestäm ett värde på x så att f(x) = {target_y_snygg:g}"
                 alla_x = list(set([p[0] for p in giltiga_punkter if p[1] == target_y]))
@@ -133,8 +131,6 @@ def ny_uppgift():
 
     st.session_state.f = f
     st.session_state.fraga = fraga.replace('.', ',')
-    
-    # FIX: Tvingar alla rätta svar i datorns minne att vara helt exakta och utan -0.0
     st.session_state.ratt_svar = [round(ans, 4) + 0.0 for ans in ratt_svar]
 
 # --- Initiera appens minne ---
@@ -146,53 +142,55 @@ if 'fraga_nr' not in st.session_state:
 # --- UI (Själva webbsidan) ---
 st.title("Läs av grafen!")
 
-col_top1, col_top2 = st.columns([2, 1])
-with col_top1:
-    st.write("Välj svårighetsgrad och läs av grafen.")
-with col_top2:
+# Skapa två huvudkolumner: en för grafen (lite bredare) och en för frågor/kontroller
+col_graf, col_kontroller = st.columns([1.5, 1], gap="large")
+
+with col_graf:
+    # Grafen är nu lite mindre (6x6) för att få plats bättre på skärmen
+    fig, ax = plt.subplots(figsize=(6, 6))
+    x_plot = np.linspace(-10, 10, 400)
+    y_plot = st.session_state.f(x_plot)
+
+    ax.plot(x_plot, y_plot, linewidth=2.5, color='blue')
+
+    ax.grid(True, which='both', linestyle='-', linewidth=0.5, color='gray')
+    ax.spines['left'].set_position('zero')
+    ax.spines['bottom'].set_position('zero')
+    ax.spines['right'].set_color('none')
+    ax.spines['top'].set_color('none')
+    ax.xaxis.set_ticks_position('bottom')
+    ax.yaxis.set_ticks_position('left')
+
+    ax.set_xticks(np.arange(-10, 11, 1))
+    ax.set_yticks(np.arange(-10, 11, 1))
+    ax.set_xlim(-10, 10)
+    ax.set_ylim(-10, 10)
+    ax.set_aspect('equal')
+
+    ax.text(10.2, 0, 'x', va='center', ha='left', fontsize=12, fontweight='bold')
+    ax.text(0, 10.2, 'y', va='bottom', ha='center', fontsize=12, fontweight='bold')
+
+    st.pyplot(fig)
+    plt.close(fig) 
+
+with col_kontroller:
+    # --- Inställningar ---
+    st.subheader("Inställningar")
     aktuellt_index = 0 if st.session_state.niva == 1 else 1
-    ny_niva = st.radio("Svårighetsgrad:", [1, 2], horizontal=True, index=aktuellt_index)
+    ny_niva = st.radio("Välj svårighetsgrad:", [1, 2], horizontal=True, index=aktuellt_index)
     
     if ny_niva != st.session_state.niva:
         st.session_state.niva = ny_niva
         ny_uppgift()
         st.rerun()
-
-# Skapa figuren
-fig, ax = plt.subplots(figsize=(8, 8))
-x_plot = np.linspace(-10, 10, 400)
-y_plot = st.session_state.f(x_plot)
-
-# Rita funktionen
-ax.plot(x_plot, y_plot, linewidth=2.5, color='blue')
-
-# Ställ in koordinatsystemet
-ax.grid(True, which='both', linestyle='-', linewidth=0.5, color='gray')
-ax.spines['left'].set_position('zero')
-ax.spines['bottom'].set_position('zero')
-ax.spines['right'].set_color('none')
-ax.spines['top'].set_color('none')
-ax.xaxis.set_ticks_position('bottom')
-ax.yaxis.set_ticks_position('left')
-
-ax.set_xticks(np.arange(-10, 11, 1))
-ax.set_yticks(np.arange(-10, 11, 1))
-ax.set_xlim(-10, 10)
-ax.set_ylim(-10, 10)
-ax.set_aspect('equal')
-
-ax.text(10.2, 0, 'x', va='center', ha='left', fontsize=12, fontweight='bold')
-ax.text(0, 10.2, 'y', va='bottom', ha='center', fontsize=12, fontweight='bold')
-
-st.pyplot(fig)
-plt.close(fig) 
-
-# --- Frågedelen ---
-st.subheader(st.session_state.fraga)
-
-col1, col2 = st.columns([2, 1])
-
-with col1:
+        
+    st.divider() # En snygg grå linje för att dela av
+    
+    # --- Uppgift och Svarsrutor ---
+    st.subheader("Uppgift")
+    # Skriver ut frågan lite större och i fetstil
+    st.markdown(f"**{st.session_state.fraga}**")
+    
     antal_svar = len(st.session_state.ratt_svar)
     svar_lista = []
     
@@ -202,10 +200,25 @@ with col1:
         svar = st.text_input(etikett, key=nyckel)
         svar_lista.append(svar)
         
-    if st.button("Rätta svar"):
+    st.write("") # Skapar lite luft innan knapparna
+    
+    # Lägger knapparna bredvid varandra för att spara plats
+    knapp_col1, knapp_col2 = st.columns(2)
+    
+    with knapp_col1:
+        # type="primary" gör knappen mer framträdande (ofta färgad)
+        rattat = st.button("Rätta svar", type="primary", use_container_width=True)
+        
+    with knapp_col2:
+        ny_graf = st.button("Ny graf", use_container_width=True)
+        
+    if ny_graf:
+        ny_uppgift()
+        st.rerun()
+        
+    if rattat:
         if all(s.strip() != "" for s in svar_lista):
             try:
-                # Vi avrundar även elevens svar för säkerhets skull
                 anv_svar_float = [round(float(s.strip().replace(',', '.')), 4) for s in svar_lista]
                 
                 if sorted(anv_svar_float) == st.session_state.ratt_svar:
@@ -217,10 +230,3 @@ with col1:
                 st.warning("⚠️ Ange bara siffror (t.ex. 2, -3, eller 1,5).")
         else:
             st.warning("Fyll i alla rutor innan du rättar.")
-
-with col2:
-    st.write("") 
-    st.write("")
-    if st.button("Ge mig en ny graf"):
-        ny_uppgift()
-        st.rerun()
