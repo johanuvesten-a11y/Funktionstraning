@@ -52,8 +52,9 @@ def ny_uppgift():
         
     niva = st.session_state.get('niva', 1)
     
-    # FIX: Nollställ submitted state för ny uppgift
+    # Nollställ minnet för rättning när vi byter uppgift
     st.session_state.submitted_ans = False
+    st.session_state.svar_status = None
         
     for _ in range(100): 
         f = generera_funktion()
@@ -74,7 +75,6 @@ def ny_uppgift():
             if fraga_typ == 'hitta_y':
                 fraga = f"Bestäm f({target_x:g})"
                 ratt_svar = [target_y]
-                # Spara koordinater för förklaring
                 st.session_state.q_type_vis = 'vis_find_y'
                 st.session_state.trace_x = target_x
                 st.session_state.trace_y = target_y
@@ -83,7 +83,6 @@ def ny_uppgift():
                 fraga = f"Bestäm ett värde på x så att f(x) = {target_y_snygg:g}"
                 alla_x = list(set([p[0] for p in giltiga_punkter if p[1] == target_y]))
                 ratt_svar = sorted(alla_x)
-                # Spara koordinater för förklaring
                 st.session_state.q_type_vis = 'vis_find_x'
                 st.session_state.trace_y = target_y
                 st.session_state.trace_alla_x = alla_x
@@ -91,12 +90,8 @@ def ny_uppgift():
             break 
             
         else:
-            # Nivå 2: Tills vidare ritar vi förklaring för de två huvudtyperna
-            # (hitta x för givet y, och hitta y för givet x).
-            # Komplexa operationer som f(f(c)) ritar vi inte spår för än.
             fraga_typ = random.choice(['f_x_plus_c', 'f_f_c', 'f_a_op_f_b', 'f_kx'])
             
-            # Vi stänger av förklaring för dessa komplexa typer för tillfället
             st.session_state.q_type_vis = 'vis_none'
 
             if fraga_typ == 'f_x_plus_c':
@@ -113,11 +108,8 @@ def ny_uppgift():
                 alla_mål_x = [p[0] for p in giltiga_punkter if p[1] == target_y]
                 ratt_svar = sorted([tx - c for tx in alla_mål_x])
                 
-                # Spara förklaring (vi ritar för x-c -> x -> y, men ritar bara x->y)
-                # Detta är lite komplext, vi ritar bara den avlästa y-nivån.
                 st.session_state.q_type_vis = 'vis_find_x'
                 st.session_state.trace_y = target_y
-                # Vi visar var på kurvan man läser av, d.v.s. tx
                 st.session_state.trace_alla_x = alla_mål_x
                 
                 break
@@ -138,7 +130,6 @@ def ny_uppgift():
                 y2 = round(f(y1), 4)
                 ratt_svar = [y2]
                 fraga = f"Bestäm f(f({c}))"
-                # Ritar inte spår för sammansatta funktioner än
                 break
                 
             elif fraga_typ == 'f_a_op_f_b':
@@ -155,7 +146,6 @@ def ny_uppgift():
                     
                 fraga = f"Bestäm f({p1[0]:g}) {op} f({p2[0]:g})"
                 ratt_svar = [svar]
-                # Ritar inte spår för operationer än
                 break
                 
             elif fraga_typ == 'f_kx':
@@ -170,7 +160,6 @@ def ny_uppgift():
                     fraga = f"Bestäm x om f({k_str}x) = {mål_y_snygg:g}"
                     ratt_svar = sorted(mojliga_svar)
                     
-                    # Ritar spår för var man läser av i grafen (mål_y och alla_mål_x)
                     st.session_state.q_type_vis = 'vis_find_x'
                     st.session_state.trace_y = mål_y
                     st.session_state.trace_alla_x = alla_mål_x
@@ -194,6 +183,8 @@ if 'fraga_nr' not in st.session_state:
     ny_uppgift()
 if 'submitted_ans' not in st.session_state:
     st.session_state.submitted_ans = False
+if 'svar_status' not in st.session_state:
+    st.session_state.svar_status = None
 
 # --- UI (Själva webbsidan) ---
 st.title("Läs av grafen!")
@@ -207,19 +198,16 @@ with col_graf:
 
     ax.plot(x_plot, y_plot, linewidth=1.5, color='blue')
 
-    # Standard rutnät (grått)
     ax.grid(True, which='both', linestyle='-', linewidth=0.5, color='gray', alpha=0.5)
     
-    # FIX SUGGESTION 4: Tydligare (tjockare, svarta) x- och y-axlar vid noll
     ax.spines['left'].set_position('zero')
-    ax.spines['left'].set_linewidth(2.0) # Tjockare
-    ax.spines['left'].set_color('black') # Svart
+    ax.spines['left'].set_linewidth(2.0) 
+    ax.spines['left'].set_color('black') 
 
     ax.spines['bottom'].set_position('zero')
-    ax.spines['bottom'].set_linewidth(2.0) # Tjockare
-    ax.spines['bottom'].set_color('black') # Svart
+    ax.spines['bottom'].set_linewidth(2.0) 
+    ax.spines['bottom'].set_color('black') 
     
-    # Dölj yttre axlar
     ax.spines['right'].set_color('none')
     ax.spines['top'].set_color('none')
     
@@ -241,40 +229,31 @@ with col_graf:
     ax.text(10.2, 0, 'x', va='center', ha='left', fontsize=12, fontweight='bold')
     ax.text(0, 10.2, 'y', va='bottom', ha='center', fontsize=12, fontweight='bold')
 
-    # FIX SUGGESTION 1: Rita visuell förklaring om eleven rättat svaret
     if st.session_state.submitted_ans:
         q_vis_type = st.session_state.get('q_type_vis', 'vis_none')
         
         if q_vis_type == 'vis_find_y':
             tx = st.session_state.trace_x
             ty = st.session_state.trace_y
-            # 1. Streckad linje från x-axel upp till kurvan
             ax.plot([tx, tx], [0, ty], linestyle='--', color='red', linewidth=1.2, alpha=0.7)
-            # 2. Streckad linje från kurvan bort till y-axel
             ax.plot([tx, 0], [ty, ty], linestyle='--', color='red', linewidth=1.2, alpha=0.7)
-            # Prick på kurvan
             ax.plot(tx, ty, 'ro', markersize=6)
             
         elif q_vis_type == 'vis_find_x':
             ty = st.session_state.trace_y
             ax_list = st.session_state.trace_alla_x
-            # 1. Streckad linje från y-axel bort till kurvan
-            # (Vi ritar en lång linje över alla avläsningspunkter)
             min_ax = min(ax_list + [0])
             max_ax = max(ax_list + [0])
             ax.plot([min_ax, max_ax], [ty, ty], linestyle='--', color='red', linewidth=1.2, alpha=0.7)
             
-            # 2. Streckade linjer från varje avläsningspunkt ner till x-axel
             for ax_v in ax_list:
                 ax.plot([ax_v, ax_v], [ty, 0], linestyle='--', color='red', linewidth=1.2, alpha=0.7)
-                # Prickar på kurvan
                 ax.plot(ax_v, ty, 'ro', markersize=6)
 
     st.pyplot(fig)
     plt.close(fig) 
 
 with col_kontroller:
-    # --- Inställningar ---
     st.subheader("Inställningar")
     aktuellt_index = 0 if st.session_state.niva == 1 else 1
     ny_niva = st.radio("Välj svårighetsgrad:", [1, 2], horizontal=True, index=aktuellt_index)
@@ -286,7 +265,6 @@ with col_kontroller:
         
     st.divider() 
     
-    # --- Uppgift och Svarsrutor ---
     st.subheader("Uppgift")
     
     st.markdown(f"<div style='font-size: 32px; font-weight: bold; color: #0056b3; margin-bottom: 20px;'>{st.session_state.fraga}</div>", unsafe_allow_html=True)
@@ -305,7 +283,6 @@ with col_kontroller:
     knapp_col1, knapp_col2 = st.columns(2)
     
     with knapp_col1:
-        # type="primary" gör knappen mer framträdande (ofta färgad)
         rattat = st.button("Rätta svar", type="primary", use_container_width=True)
         
     with knapp_col2:
@@ -315,8 +292,8 @@ with col_kontroller:
         ny_uppgift()
         st.rerun()
         
+    # FIX: Spara resultatet i minnet innan omstarten
     if rattat:
-        # FIX: Sätt submitted state till True vid rättning
         st.session_state.submitted_ans = True
         
         if all(s.strip() != "" for s in svar_lista):
@@ -324,14 +301,24 @@ with col_kontroller:
                 anv_svar_float = [round(float(s.strip().replace(',', '.')), 4) for s in svar_lista]
                 
                 if sorted(anv_svar_float) == st.session_state.ratt_svar:
-                    st.success("✅ Helt rätt! Snyggt jobbat.")
+                    st.session_state.svar_status = 'ratt'
                 else:
-                    svar_str = ' och '.join([f"{a:g}".replace('.', ',') for a in st.session_state.ratt_svar])
-                    st.error(f"❌ Tyvärr fel. Rätt svar var: {svar_str}")
+                    st.session_state.svar_status = 'fel'
             except ValueError:
-                st.warning("⚠️ Ange bara siffror (t.ex. 2, -3, eller 1,5).")
+                st.session_state.svar_status = 'varning_format'
         else:
-            st.warning("Fyll i alla rutor innan du rättar.")
+            st.session_state.svar_status = 'varning_tom'
             
-        # Tvinga rerender för att rita förklaringen
         st.rerun()
+
+    # FIX: Rita ut meddelandet baserat på minnet från st.session_state
+    if st.session_state.submitted_ans:
+        if st.session_state.svar_status == 'ratt':
+            st.success("✅ Helt rätt! Snyggt jobbat.")
+        elif st.session_state.svar_status == 'fel':
+            svar_str = ' och '.join([f"{a:g}".replace('.', ',') for a in st.session_state.ratt_svar])
+            st.error(f"❌ Tyvärr fel. Rätt svar var: {svar_str}")
+        elif st.session_state.svar_status == 'varning_format':
+            st.warning("⚠️ Ange bara siffror (t.ex. 2, -3, eller 1,5).")
+        elif st.session_state.svar_status == 'varning_tom':
+            st.warning("Fyll i alla rutor innan du rättar.")
