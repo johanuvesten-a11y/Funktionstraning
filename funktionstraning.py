@@ -164,16 +164,15 @@ if 'fraga_nr' not in st.session_state:
 # --- UI (Själva webbsidan) ---
 st.title("Läs av grafen!")
 
-# Justerade kolumnbredden en aning för att matcha den mindre grafen
 col_graf, col_kontroller = st.columns([1.2, 1], gap="large")
 
 with col_graf:
-    # FIX: Minskade storleken på grafen från (6, 6) till (5, 5)
     fig, ax = plt.subplots(figsize=(5, 5))
     x_plot = np.linspace(-10, 10, 400)
     y_plot = st.session_state.f(x_plot)
 
-    ax.plot(x_plot, y_plot, linewidth=2.5, color='blue')
+    # FIX: Ändrade linewidth från 2.5 till 1.5 för en tunnare och skarpare linje
+    ax.plot(x_plot, y_plot, linewidth=1.5, color='blue')
 
     ax.grid(True, which='both', linestyle='-', linewidth=0.5, color='gray')
     ax.spines['left'].set_position('zero')
