@@ -5,8 +5,30 @@ import matplotlib.pyplot as plt
 import numpy as np
 import random
 
-# --- Ställ in sidans layout till bred (valfritt, men ger mer plats) ---
+# --- Ställ in sidans layout till bred ---
 st.set_page_config(layout="wide", page_title="Läs av grafen")
+
+# --- Specialdesign (CSS) för att göra text och rutor större ---
+st.markdown("""
+<style>
+/* Gör texten som eleven skriver i svarsrutan mycket större och centrerad */
+input[type="text"] {
+    font-size: 24px !important;
+    font-weight: bold !important;
+    text-align: center !important;
+    padding: 15px !important;
+}
+/* Gör etiketten (t.ex. 'Svar 1:') ovanför rutan större */
+.stTextInput label p {
+    font-size: 18px !important;
+    font-weight: bold !important;
+}
+/* Gör rätt/fel-meddelandena lite tydligare */
+.stAlert p {
+    font-size: 18px !important;
+}
+</style>
+""", unsafe_allow_html=True)
 
 # --- Funktioner ---
 def generera_funktion():
@@ -142,11 +164,9 @@ if 'fraga_nr' not in st.session_state:
 # --- UI (Själva webbsidan) ---
 st.title("Läs av grafen!")
 
-# Skapa två huvudkolumner: en för grafen (lite bredare) och en för frågor/kontroller
 col_graf, col_kontroller = st.columns([1.5, 1], gap="large")
 
 with col_graf:
-    # Grafen är nu lite mindre (6x6) för att få plats bättre på skärmen
     fig, ax = plt.subplots(figsize=(6, 6))
     x_plot = np.linspace(-10, 10, 400)
     y_plot = st.session_state.f(x_plot)
@@ -184,12 +204,13 @@ with col_kontroller:
         ny_uppgift()
         st.rerun()
         
-    st.divider() # En snygg grå linje för att dela av
+    st.divider() 
     
     # --- Uppgift och Svarsrutor ---
     st.subheader("Uppgift")
-    # Skriver ut frågan lite större och i fetstil
-    st.markdown(f"**{st.session_state.fraga}**")
+    
+    # FIX: Gör frågetexten mycket större med hjälp av HTML
+    st.markdown(f"<div style='font-size: 32px; font-weight: bold; color: #0056b3; margin-bottom: 20px;'>{st.session_state.fraga}</div>", unsafe_allow_html=True)
     
     antal_svar = len(st.session_state.ratt_svar)
     svar_lista = []
@@ -200,13 +221,11 @@ with col_kontroller:
         svar = st.text_input(etikett, key=nyckel)
         svar_lista.append(svar)
         
-    st.write("") # Skapar lite luft innan knapparna
+    st.write("") 
     
-    # Lägger knapparna bredvid varandra för att spara plats
     knapp_col1, knapp_col2 = st.columns(2)
     
     with knapp_col1:
-        # type="primary" gör knappen mer framträdande (ofta färgad)
         rattat = st.button("Rätta svar", type="primary", use_container_width=True)
         
     with knapp_col2:
