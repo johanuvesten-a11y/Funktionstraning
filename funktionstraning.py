@@ -164,10 +164,12 @@ if 'fraga_nr' not in st.session_state:
 # --- UI (Själva webbsidan) ---
 st.title("Läs av grafen!")
 
-col_graf, col_kontroller = st.columns([1.5, 1], gap="large")
+# Justerade kolumnbredden en aning för att matcha den mindre grafen
+col_graf, col_kontroller = st.columns([1.2, 1], gap="large")
 
 with col_graf:
-    fig, ax = plt.subplots(figsize=(6, 6))
+    # FIX: Minskade storleken på grafen från (6, 6) till (5, 5)
+    fig, ax = plt.subplots(figsize=(5, 5))
     x_plot = np.linspace(-10, 10, 400)
     y_plot = st.session_state.f(x_plot)
 
@@ -209,7 +211,6 @@ with col_kontroller:
     # --- Uppgift och Svarsrutor ---
     st.subheader("Uppgift")
     
-    # FIX: Gör frågetexten mycket större med hjälp av HTML
     st.markdown(f"<div style='font-size: 32px; font-weight: bold; color: #0056b3; margin-bottom: 20px;'>{st.session_state.fraga}</div>", unsafe_allow_html=True)
     
     antal_svar = len(st.session_state.ratt_svar)
