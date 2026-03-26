@@ -133,7 +133,8 @@ def ny_uppgift():
                 mål_y = random.choice([p[1] for p in giltiga_punkter])
                 alla_mål_x = [p[0] for p in giltiga_punkter if p[1] == mål_y]
                 
-                k_val = random.choice([2, -2, 0.5, -0.5, -1])
+                # FIX: Ändrat till enbart [2, -2] för att undvika f(0.5x) etc.
+                k_val = random.choice([2, -2])
                 
                 mojliga_svar = [x / k_val for x in alla_mål_x]
                 
@@ -171,7 +172,6 @@ with col_graf:
     x_plot = np.linspace(-10, 10, 400)
     y_plot = st.session_state.f(x_plot)
 
-    # FIX: Ändrade linewidth från 2.5 till 1.5 för en tunnare och skarpare linje
     ax.plot(x_plot, y_plot, linewidth=1.5, color='blue')
 
     ax.grid(True, which='both', linestyle='-', linewidth=0.5, color='gray')
