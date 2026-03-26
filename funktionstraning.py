@@ -29,15 +29,16 @@ def ny_uppgift():
         
     niva = st.session_state.get('niva', 1)
         
-    # Säkerhetsspärr: Försök max 100 gånger för att hitta en perfekt funktion och fråga
     for _ in range(100): 
         f = generera_funktion()
         
         giltiga_punkter = []
-        for x_val in np.arange(-8, 8.5, 0.5):
+        # FIX: Använder en säkrare metod än np.arange för att undvika decimalfel
+        for x_val in [i / 2 for i in range(-16, 17)]:
             y_val = f(x_val)
             if abs(y_val) <= 10 and round(y_val * 2, 4).is_integer():
-                giltiga_punkter.append((x_val, y_val))
+                # FIX: Runda av värdena direkt när de sparas
+                giltiga_punkter.append((round(x_val, 4), round(y_val, 4)))
                 
         if not giltiga_punkter:
             continue 
@@ -50,14 +51,15 @@ def ny_uppgift():
                 fraga = f"Bestäm f({target_x:g})"
                 ratt_svar = [target_y]
             else:
-                fraga = f"Bestäm ett värde på x så att f(x) = {target_y:g}"
+                # FIX: Lägger till 0.0 för att datorn inte ska skriva ut -0
+                target_y_snygg = target_y + 0.0 
+                fraga = f"Bestäm ett värde på x så att f(x) = {target_y_snygg:g}"
                 alla_x = list(set([p[0] for p in giltiga_punkter if p[1] == target_y]))
                 ratt_svar = sorted(alla_x)
                 
             break 
             
         else:
-            # Nu finns det 4 olika uppgiftstyper för Nivå 2
             fraga_typ = random.choice(['f_x_plus_c', 'f_f_c', 'f_a_op_f_b', 'f_kx'])
             
             if fraga_typ == 'f_x_plus_c':
@@ -68,7 +70,8 @@ def ny_uppgift():
                 c = random.choice([-3, -2, -1, 1, 2, 3])
                 c_str = f"+ {c}" if c > 0 else f"- {abs(c)}"
                 
-                fraga = f"Bestäm x om f(x {c_str}) = {target_y:g}"
+                target_y_snygg = target_y + 0.0
+                fraga = f"Bestäm x om f(x {c_str}) = {target_y_snygg:g}"
                 
                 alla_mål_x = [p[0] for p in giltiga_punkter if p[1] == target_y]
                 ratt_svar = sorted([tx - c for tx in alla_mål_x])
@@ -86,12 +89,11 @@ def ny_uppgift():
                 if not valid_c: continue 
                 
                 c = random.choice(valid_c)
-                fraga = f"Bestäm f(f({c}))"
                 ratt_svar = [f(f(c))]
+                fraga = f"Bestäm f(f({c}))"
                 break
                 
             elif fraga_typ == 'f_a_op_f_b':
-                # Typ 1: Operationer med funktionsvärden, t.ex. f(2) + f(1)
                 hel_punkter = [p for p in giltiga_punkter if round(p[1], 4).is_integer() and round(p[0], 4).is_integer()]
                 if len(hel_punkter) < 2: continue
                 
@@ -108,7 +110,6 @@ def ny_uppgift():
                 break
                 
             elif fraga_typ == 'f_kx':
-                # Typ 3: Inre multiplikation, t.ex. Bestäm x om f(2x) = 4
                 mål_y = random.choice([p[1] for p in giltiga_punkter])
                 alla_mål_x = [p[0] for p in giltiga_punkter if p[1] == mål_y]
                 
@@ -118,24 +119,23 @@ def ny_uppgift():
                 
                 if all(round(s * 2, 4).is_integer() and abs(s) <= 20 for s in mojliga_svar):
                     k_str = f"{k_val:g}"
-                    fraga = f"Bestäm x om f({k_str}x) = {mål_y:g}"
+                    mål_y_snygg = mål_y + 0.0
+                    fraga = f"Bestäm x om f({k_str}x) = {mål_y_snygg:g}"
                     ratt_svar = sorted(mojliga_svar)
                     break
                 else:
                     continue
 
     else:
-        # Nödlösning
         f = lambda x: x
         fraga = "Bestäm f(1)"
         ratt_svar = [1.0]
 
     st.session_state.f = f
-    
-    # Byt enbart ut eventuella engelska decimalpunkter mot kommatecken
     st.session_state.fraga = fraga.replace('.', ',')
     
-    st.session_state.ratt_svar = ratt_svar
+    # FIX: Tvingar alla rätta svar i datorns minne att vara helt exakta och utan -0.0
+    st.session_state.ratt_svar = [round(ans, 4) + 0.0 for ans in ratt_svar]
 
 # --- Initiera appens minne ---
 if 'niva' not in st.session_state:
@@ -205,7 +205,8 @@ with col1:
     if st.button("Rätta svar"):
         if all(s.strip() != "" for s in svar_lista):
             try:
-                anv_svar_float = [float(s.strip().replace(',', '.')) for s in svar_lista]
+                # Vi avrundar även elevens svar för säkerhets skull
+                anv_svar_float = [round(float(s.strip().replace(',', '.')), 4) for s in svar_lista]
                 
                 if sorted(anv_svar_float) == st.session_state.ratt_svar:
                     st.success("✅ Helt rätt! Snyggt jobbat.")
